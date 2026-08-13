@@ -37,6 +37,17 @@ function Test-Command {
     return [bool](Get-Command $Name -ErrorAction SilentlyContinue)
 }
 
+function Test-EncryptedArchive {
+    param([string]$ArchivePath)
+
+    if (-not $has7z) { return $false }
+
+    $listOutput = & 7z l -slt -p- -bso0 $ArchivePath 2>&1
+    if ($LASTEXITCODE -ne 0) { return $false }
+
+    return ($listOutput -match 'Encrypted\s*=\s*\+')
+}
+
 $has7z = Test-Command 7z
 $hasUnzip = Test-Command unzip
 $hasExpandArchive = Test-Command Expand-Archive
@@ -50,11 +61,20 @@ function Extract-Archive {
 
     $lowerPath = $ArchivePath.ToLower()
     if ($lowerPath.EndsWith('.zip')) {
+        if (Test-EncryptedArchive -ArchivePath $ArchivePath) {
+            Write-Log "Skipped password-protected archive: $ArchivePath"
+            return 1
+        }
+
         if ($has7z) {
-            $mode = if ($SkipExisting) { @('x', '-aos') } else { @('x', '-y') }
+            $mode = if ($SkipExisting) { @('x', '-aos', '-bso0', '-p-') } else { @('x', '-y', '-bso0', '-p-') }
             $processOutput = & 7z @mode "-o$Destination" $ArchivePath 2>&1
             $exitCode = $LASTEXITCODE
             if ($exitCode -le 1) { return 0 }
+            if ($processOutput -match 'password|wrong password|encrypted') {
+                Write-Log "Skipped password-protected archive: $ArchivePath"
+                return 1
+            }
             return $exitCode
         }
 
@@ -81,10 +101,19 @@ function Extract-Archive {
             Throw "7z is required to extract 7z/rar archives on this system"
         }
 
-        $mode = if ($SkipExisting) { @('x', '-aos') } else { @('x', '-y') }
-        & 7z @mode "-o$Destination" $ArchivePath
+        if (Test-EncryptedArchive -ArchivePath $ArchivePath) {
+            Write-Log "!! Skipped password-protected archive: $ArchivePath"
+            return 1
+        }
+
+        $mode = if ($SkipExisting) { @('x', '-aos', '-bso0', '-p-') } else { @('x', '-y', '-bso0', '-p-') }
+        $processOutput = & 7z @mode "-o$Destination" $ArchivePath 2>&1
         $exitCode = $LASTEXITCODE
-        if ($exitCode -eq 0 -or $exitCode -eq 1) { return 0 }
+        if ($exitCode -le 1) { return 0 }
+        if ($processOutput -match 'password|wrong password|encrypted') {
+            Write-Log "!! Skipped password-protected archive: $ArchivePath"
+            return 1
+        }
         return $exitCode
     }
 
@@ -193,6 +222,6 @@ Get-ChildItem -LiteralPath $rootDir -Directory -ErrorAction SilentlyContinue | F
     }
 }
 
-Get-ArchiveFiles $rootDir | ForEach-Object {
-    Write-Log $_.FullName
-}
+# Get-ArchiveFiles $rootDir | ForEach-Object {
+#     Write-Log $_.FullName
+# }
