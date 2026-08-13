@@ -217,6 +217,8 @@ Get-ChildItem -LiteralPath $rootDir -Directory -ErrorAction SilentlyContinue | F
                             if (Test-Path -LiteralPath $jpgDir) {
                                 Remove-Item -LiteralPath $jpgDir -Force -ErrorAction SilentlyContinue
                             }
+                        } else {
+                            Move-ChildItemsUpOneLevel -ChildDir $items[0].FullName -ParentDir $articleDir.FullName
                         }
                     } else {
                         Move-ChildItemsUpOneLevel -ChildDir $items[0].FullName -ParentDir $articleDir.FullName
