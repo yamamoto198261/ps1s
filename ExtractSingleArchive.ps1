@@ -145,13 +145,36 @@ function Move-ChildItemsUpOneLevel {
     Remove-Item -LiteralPath $ChildDir -Recurse -Force -ErrorAction SilentlyContinue
 }
 
+function Get-RelativePathCompat {
+    param(
+        [string]$FromPath,
+        [string]$ToPath
+    )
+
+    $fromFull = [System.IO.Path]::GetFullPath($FromPath).TrimEnd('\', '/')
+    $toFull = [System.IO.Path]::GetFullPath($ToPath).TrimEnd('\', '/')
+
+    if ($fromFull -eq $toFull) {
+        return '.'
+    }
+
+    $fromUri = New-Object System.Uri(($fromFull + [System.IO.Path]::DirectorySeparatorChar))
+    $toUri = New-Object System.Uri(($toFull + [System.IO.Path]::DirectorySeparatorChar))
+
+    $relative = [System.Uri]::UnescapeDataString($fromUri.MakeRelativeUri($toUri).ToString())
+    return ($relative -replace '/', '\')
+}
+
 function Get-RelativeSubdirectories {
     param([string]$BaseDirectory)
 
+    if (-not (Test-Path -LiteralPath $BaseDirectory -PathType Container)) {
+        return @()
+    }
+
     Get-ChildItem -LiteralPath $BaseDirectory -Directory -Recurse -Force -ErrorAction SilentlyContinue |
         Sort-Object FullName | ForEach-Object {
-            $relative = [IO.Path]::GetRelativePath($BaseDirectory, $_.FullName)
-            $relative -replace '/', '\'
+            Get-RelativePathCompat -FromPath $BaseDirectory -ToPath $_.FullName
         }
 }
 
