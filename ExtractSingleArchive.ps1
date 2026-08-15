@@ -60,7 +60,7 @@ function Execute-7z {
     )
 
     $mode = if ($SkipExisting) { @('x', '-aos', '-bso0', '-p-') } else { @('x', '-y', '-bso0', '-p-') }
-    $processOutput = & 7z @mode "-o$Destination" $ArchivePath 2>&1
+    $processOutput = & 7z @mode "-o$Destination" "-w$Destination" $ArchivePath 2>&1
     $exitCode = $LASTEXITCODE
     if ($exitCode -le 1) { return 0 }
     if ($processOutput -match 'password|wrong password|encrypted') {
