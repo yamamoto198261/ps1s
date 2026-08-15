@@ -4,7 +4,9 @@ foreach($media in Get-CimInstance -ClassName Win32_PhysicalMedia | Select-Object
 }
 
 foreach($drives in Get-CimInstance -query "SELECT * from Win32_DiskDrive"){
-    if ( $drives.Caption -ne 'ASMT CRCM535U32CIS SCSI Disk Device' -and $drives.Caption -ne 'WD My Book 25EE USB Device' ){
+    if ( ($drives.Caption -ne 'ASMT CRCM535U32CIS SCSI Disk Device') -and
+         ($drives.Caption -ne 'WD My Book 25EE USB Device') -and
+         ($drives.Caption -ne 'WDC  WUH722016CLE6L4') ){
         continue
     }
     Write-Host $drives.Caption
