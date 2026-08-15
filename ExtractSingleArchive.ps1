@@ -67,7 +67,8 @@ function Extract-Archive {
         }
 
         if ($has7z) {
-            $mode = if ($SkipExisting) { @('x', '-aos', '-bso0', '-p-') } else { @('x', '-y', '-bso0', '-p-') }
+            $mode = if ($SkipExisting) { @('x') } else { @('x', '-y') }
+            $mode += @('-bso0', '-p-')
             $processOutput = & 7z @mode "-o$Destination" $ArchivePath 2>&1
             $exitCode = $LASTEXITCODE
             if ($exitCode -le 1) { return 0 }
