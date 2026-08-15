@@ -52,6 +52,24 @@ $has7z = Test-Command 7z
 $hasUnzip = Test-Command unzip
 $hasExpandArchive = Test-Command Expand-Archive
 
+function Execute-7z {
+   param(
+        [string]$ArchivePath,
+        [string]$Destination,
+        [switch]$SkipExisting
+    )
+
+    $mode = if ($SkipExisting) { @('x', '-aos', '-bso0', '-p-') } else { @('x', '-y', '-bso0', '-p-') }
+    $processOutput = & 7z @mode "-o$Destination" $ArchivePath 2>&1
+    $exitCode = $LASTEXITCODE
+    if ($exitCode -le 1) { return 0 }
+    if ($processOutput -match 'password|wrong password|encrypted') {
+        Write-Log "Skipped password-protected archive: $ArchivePath"
+        return 1
+    }
+    return $exitCode
+}
+
 function Extract-Archive {
     param(
         [string]$ArchivePath,
@@ -67,16 +85,7 @@ function Extract-Archive {
         }
 
         if ($has7z) {
-            $mode = if ($SkipExisting) { @('x') } else { @('x', '-y') }
-            $mode += @('-bso0', '-p-')
-            $processOutput = & 7z @mode "-o$Destination" $ArchivePath 2>&1
-            $exitCode = $LASTEXITCODE
-            if ($exitCode -le 1) { return 0 }
-            if ($processOutput -match 'password|wrong password|encrypted') {
-                Write-Log "Skipped password-protected archive: $ArchivePath"
-                return 1
-            }
-            return $exitCode
+            return Execute-7z -ArchivePath $ArchivePath -Destination $Destination -SkipExisting:$SkipExisting
         }
 
         if ($hasExpandArchive) {
@@ -107,15 +116,7 @@ function Extract-Archive {
             return 1
         }
 
-        $mode = if ($SkipExisting) { @('x', '-aos', '-bso0', '-p-') } else { @('x', '-y', '-bso0', '-p-') }
-        $processOutput = & 7z @mode "-o$Destination" $ArchivePath 2>&1
-        $exitCode = $LASTEXITCODE
-        if ($exitCode -le 1) { return 0 }
-        if ($processOutput -match 'password|wrong password|encrypted') {
-            Write-Log "!! Skipped password-protected archive: $ArchivePath"
-            return 1
-        }
-        return $exitCode
+        return Execute-7z -ArchivePath $ArchivePath -Destination $Destination -SkipExisting:$SkipExisting
     }
 
     Throw "Unsupported archive format: '$ArchivePath'"
