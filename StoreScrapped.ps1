@@ -20,7 +20,7 @@ $db = (Get-Content $dbJsonPath | ConvertFrom-Json)
 # Write-Host $db
 
 $mainUserAncestors = @{}
-foreach($freqDir in "pixiv_freq", "pixiv_rare") {
+foreach($freqDir in "pixiv_freq") {
     foreach($parentDir in (Get-ChildItem "$mainSitesPath\$freqDir" | Where-Object { $_.PSIsContainer })) {
         if ("$parentDir" -eq "lnk") { continue }
         if ("$parentDir" -eq "removed") { continue }
