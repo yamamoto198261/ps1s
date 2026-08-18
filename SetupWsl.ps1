@@ -17,12 +17,6 @@ foreach($drives in Get-CimInstance -query "SELECT * from Win32_DiskDrive"){
 
     $deviceId = $drives.DeviceID.split('\')[-1]
     wsl --mount $drives.DeviceID --partition 1
-    $symlinkname=wsl cat /mnt/wsl/${deviceId}p1/symlinkname
-    if ($symlinkname -ne $null) {
-        wsl ln -sfnv /mnt/wsl/${deviceId}p1 /home/tyamamoto/$symlinkname
-    } else {
-        Write-Host "symlinkname not found" -ForegroundColor DarkYellow
-    }
 }
 
 wsl --mount "D:\wsl.vhdx" --vhd  --partition 1 --name dvhdx
