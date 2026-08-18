@@ -25,6 +25,8 @@ foreach($drives in Get-CimInstance -query "SELECT * from Win32_DiskDrive"){
     }
 }
 
+wsl --mount "D:\wsl.vhdx" --vhd  --partition 1 --name dvhdx
+
 $WSL2_IPV4=bash /home/tyamamoto/workspace/scripts/WSL-Ubuntu22.04/getip.sh
 $HOST_IPV4="192.168.22.4"
 $PORT="8061"
