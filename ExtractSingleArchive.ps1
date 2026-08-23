@@ -60,7 +60,7 @@ function Execute-7z {
     )
 
     $mode = if ($SkipExisting) { @('x', '-aos') } else { @('x', '-y') }
-    $mode += @('-bso0', '-p-')
+    $mode += @('-bb1', '-p-')
 
     $processOutput = & 7z @mode "-o$Destination" "-w$Destination" $ArchivePath 2>&1 | ForEach-Object {
         $line = $_.ToString()
