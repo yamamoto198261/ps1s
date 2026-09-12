@@ -21,12 +21,6 @@ $logFile = Join-Path (Get-Location).Path ("{0}_{1}.log" -f (Split-Path $rootDir 
 New-Item -Path $logFile -ItemType File -Force | Out-Null
 Start-Transcript -Path $logFile -Append -Force | Out-Null
 
-function Write-Log {
-    param([string]$Message)
-    Add-Content -Path $logFile -Value $Message
-    Write-Host $Message
-}
-
 function Get-ArchiveFiles {
     param([string]$Directory)
     Get-ChildItem -LiteralPath $Directory -Recurse -File -Force -ErrorAction SilentlyContinue |
@@ -65,13 +59,13 @@ function Execute-7z {
 
     $processOutput = & 7z @mode "-o$Destination" "-w$Destination" $ArchivePath 2>&1 | ForEach-Object {
         $line = $_.ToString()
-        Write-Log $line
+        Write-Host $line
         $line
     }
     $exitCode = $LASTEXITCODE
     if ($exitCode -le 1) { return 0 }
     if ($processOutput -match 'password|wrong password|encrypted') {
-        Write-Log "Skipped password-protected archive: $ArchivePath"
+        Write-Host "Skipped password-protected archive: $ArchivePath"
         return 1
     }
     return $exitCode
@@ -87,7 +81,7 @@ function Extract-Archive {
     $lowerPath = $ArchivePath.ToLower()
     if ($lowerPath.EndsWith('.zip')) {
         if (Test-EncryptedArchive -ArchivePath $ArchivePath) {
-            Write-Log "Skipped password-protected archive: $ArchivePath"
+            Write-Host "Skipped password-protected archive: $ArchivePath"
             return 1
         }
 
@@ -119,7 +113,7 @@ function Extract-Archive {
         }
 
         if (Test-EncryptedArchive -ArchivePath $ArchivePath) {
-            Write-Log "!! Skipped password-protected archive: $ArchivePath"
+            Write-Host "!! Skipped password-protected archive: $ArchivePath"
             return 1
         }
 
@@ -137,7 +131,7 @@ function Remove-MetaFiles {
         $target = Join-Path $Directory $item
         if (Test-Path -LiteralPath $target) {
             Remove-Item -LiteralPath $target -Recurse -Force -ErrorAction SilentlyContinue
-            Write-Log "Removed $target"
+            Write-Host "Removed $target"
         }
     }
 }
@@ -193,7 +187,7 @@ Get-ChildItem -LiteralPath $rootDir -Directory -ErrorAction SilentlyContinue | F
     $userDir = $_
     Get-ChildItem -LiteralPath $userDir.FullName -Directory -ErrorAction SilentlyContinue | ForEach-Object {
         $articleDir = $_
-        Write-Log $articleDir.FullName
+        Write-Host $articleDir.FullName
 
         $archives = Get-ArchiveFiles $articleDir.FullName
         if ($archives.Count -eq 1) {
@@ -234,10 +228,10 @@ Get-ChildItem -LiteralPath $rootDir -Directory -ErrorAction SilentlyContinue | F
                     }
                 }
             } else {
-                Write-Log '!! fail to extract. keep archive.'
-                Write-Log $articleDir.FullName
+                Write-Host '!! fail to extract. keep archive.'
+                Write-Host $articleDir.FullName
             }
-            Write-Log '======== extract done.'
+            Write-Host '======== extract done.'
         } elseif ($userDir.Name -eq '127263913_ChocoPizza') {
             foreach ($archive in $archives) {
                 $exitCode = Extract-Archive -ArchivePath $archive.FullName -Destination $articleDir.FullName -SkipExisting
@@ -247,17 +241,17 @@ Get-ChildItem -LiteralPath $rootDir -Directory -ErrorAction SilentlyContinue | F
                     New-Item -Path $trashDir -ItemType Directory -Force | Out-Null
                     Move-Item -LiteralPath $archive.FullName -Destination $trashDir -Force
                 } else {
-                    Write-Log '!! fail to extract. keep archive.'
-                    Write-Log $articleDir.FullName
+                    Write-Host '!! fail to extract. keep archive.'
+                    Write-Host $articleDir.FullName
                 }
-                Write-Log '======== extract done.'
+                Write-Host '======== extract done.'
             }
         }
     }
 }
 
 # Get-ArchiveFiles $rootDir | ForEach-Object {
-#     Write-Log $_.FullName
+#     Write-Host $_.FullName
 # }
 
 Stop-Transcript | Out-Null
