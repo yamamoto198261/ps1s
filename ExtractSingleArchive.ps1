@@ -19,6 +19,7 @@ if (-not (Test-Path -LiteralPath $rootDir -PathType Container)) {
 
 $logFile = Join-Path (Get-Location).Path ("{0}_{1}.log" -f (Split-Path $rootDir -Leaf), (Get-Date -Format yyyyMMddHHmmss))
 New-Item -Path $logFile -ItemType File -Force | Out-Null
+Start-Transcript -Path $logFile -Append -Force | Out-Null
 
 function Write-Log {
     param([string]$Message)
@@ -258,3 +259,5 @@ Get-ChildItem -LiteralPath $rootDir -Directory -ErrorAction SilentlyContinue | F
 # Get-ArchiveFiles $rootDir | ForEach-Object {
 #     Write-Log $_.FullName
 # }
+
+Stop-Transcript | Out-Null
